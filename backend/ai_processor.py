@@ -1,5 +1,6 @@
 import google.generativeai as genai
 from dotenv import load_dotenv
+from database import save_history
 import os
 
 # =====================================================
@@ -93,11 +94,12 @@ def process_code_chunks(chunks):
             "summary": response.text
 
         })
-
+        save_history(file_name,  response.text )
+   
     # =================================================
     # DEBUG
     # =================================================
-
+    
     print("\nTOTAL SUMMARIES GENERATED:")
     print(len(summaries))
 

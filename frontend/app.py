@@ -1,11 +1,77 @@
 import streamlit as st
 import requests
+import sys
+import os
+
+# =====================================================
+# CONNECT BACKEND
+# =====================================================
+
+sys.path.append(
+    os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "backend"
+        )
+    )
+)
+
+from database import save_history, get_history
+
+# =====================================================
+# PAGE CONFIG
+# =====================================================
+
+st.set_page_config(
+    page_title="RepoDoc AI",
+    layout="wide"
+)
 
 # =====================================================
 # PAGE TITLE
 # =====================================================
 
-st.title("RepoDoc AI")
+st.title("🚀 RepoDoc AI")
+
+# =====================================================
+# SIDEBAR HISTORY
+# =====================================================
+
+st.sidebar.title("📜 Previous History")
+
+history = get_history()
+
+# =====================================================
+# SHOW HISTORY BUTTONS
+# =====================================================
+
+for index, item in enumerate(history):
+
+    repo_name = item["repo_name"]
+
+    summary = item["summary"]
+
+    if st.sidebar.button(
+        repo_name,
+        key=f"history_{index}"
+    ):
+
+        st.session_state[
+            "selected_history"
+        ] = summary
+
+# =====================================================
+# DISPLAY SELECTED HISTORY
+# =====================================================
+
+if "selected_history" in st.session_state:
+
+    st.subheader("📄 Retrieved History")
+
+    st.markdown(
+        st.session_state["selected_history"]
+    )
 
 # =====================================================
 # GET USER FROM URL
@@ -16,7 +82,7 @@ query_params = st.query_params
 username = query_params.get("user")
 
 # =====================================================
-# IF USER NOT LOGGED IN
+# USER NOT LOGGED IN
 # =====================================================
 
 if not username:
@@ -26,11 +92,8 @@ if not username:
     )
 
     st.link_button(
-
         "Login with GitHub",
-
         github_login_url
-
     )
 
 # =====================================================
@@ -43,10 +106,12 @@ else:
         f"Logged in as {username}"
     )
 
+    # =================================================
+    # FETCH REPOSITORIES
+    # =================================================
+
     response = requests.get(
-
         f"http://localhost:8000/get-repositories/{username}"
-
     )
 
     data = response.json()
@@ -80,11 +145,8 @@ else:
     # =================================================
 
     selected_repo = st.selectbox(
-
         "Select Repository",
-
         repo_names
-
     )
 
     st.write(
@@ -92,7 +154,7 @@ else:
     )
 
     # =================================================
-    # GENERATE DOCUMENTATION BUTTON
+    # GENERATE BUTTON
     # =================================================
 
     generate_button = st.button(
@@ -118,9 +180,7 @@ else:
         # =============================================
         # CALL BACKEND
         # =============================================
-        st.write(username)
-        st.write(owner)
-        st.write(repo_name)
+
         response = requests.get(
 
             f"http://localhost:8000/select-repo/"
@@ -131,24 +191,48 @@ else:
         data = response.json()
 
         # =============================================
-        # SHOW RESPONSE
+        # SUCCESS
         # =============================================
 
         st.success(
             "Repository Processed Successfully!"
         )
 
+        # =============================================
+        # SHOW DOCUMENTATION
+        # =============================================
+
         st.markdown(
             data["documentation"]
         )
+
+        # =============================================
+        # SAVE HISTORY
+        # =============================================
+
+        save_history(
+            selected_repo,
+            data["documentation"]
+        )
+
+        # =============================================
+        # DOWNLOAD BUTTON
+        # =============================================
+
         st.download_button(
 
-        label="Download README.md",
+            label="Download README.md",
 
-        data=data["documentation"],
+            data=data["documentation"],
 
-        file_name="README.md",
+            file_name="README.md",
 
-        mime="text/markdown"
+            mime="text/markdown"
 
-        )   
+        )
+
+# =====================================================
+# DEBUG
+# =====================================================
+
+print(get_history())
