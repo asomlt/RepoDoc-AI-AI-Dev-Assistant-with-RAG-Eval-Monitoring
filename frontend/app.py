@@ -138,4 +138,17 @@ else:
             "Repository Processed Successfully!"
         )
 
-        st.json(data)
+        st.markdown(
+            data["documentation"]
+        )
+        st.download_button(
+
+        label="Download README.md",
+
+        data=data["documentation"],
+
+        file_name="README.md",
+
+        mime="text/markdown"
+
+        )   
